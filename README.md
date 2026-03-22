@@ -36,18 +36,24 @@ An end-to-end relational database system built around a large synthetic restaura
 ```
 RestaurantVisit.JadhavR/
 │
-├── data/
-│   ├── restaurant-visits-209874.csv          # Raw visits dataset
-│   └── restaurants-db-02102026.sqlitedb      # Reference SQLite database
+├── data/                      # AI-generated data files (not tracked); structure documented in designDBSchema.Rmd
 │
 ├── designDBSchema.Rmd         # ERD, normalization, and functional dependencies
+├── designDBSchema.pdf         # Knitted PDF output of designDBSchema.Rmd
 ├── createDB.R                 # Schema creation script
 ├── deleteDB.R                 # Schema teardown script
 ├── loadDB.R                   # Batch data loading from CSV and SQLite
 ├── testDBLoading.R            # Data loading verification and tests
 ├── StoredProcedures.R         # Stored procedure definitions and tests
 └── RevenueReport.Rmd          # R Markdown analytics report
+└── RevenueReport.pdf          # Knitted PDF output of RevenueReport.Rmd
 ```
+
+---
+
+## Data
+
+The dataset used in this project was artificially generated using AI. The data files are not included in this repository. The full structure, attributes, and relationships of the data are documented in `designDBSchema.Rmd`.
 
 ---
 
