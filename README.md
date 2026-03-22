@@ -40,6 +40,7 @@ RestaurantVisit.JadhavR/
 │
 ├── designDBSchema.Rmd         # ERD, normalization, and functional dependencies
 ├── designDBSchema.pdf         # Knitted PDF output of designDBSchema.Rmd
+├── ERD.png                    # Entity Relationship Diagram
 ├── createDB.R                 # Schema creation script
 ├── deleteDB.R                 # Schema teardown script
 ├── loadDB.R                   # Batch data loading from CSV and SQLite
