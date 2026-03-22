@@ -61,7 +61,7 @@ I have created 8 tables to combine the 2 tables (servers and restaurants) from s
 
 ## ER Diagram
 
-![ERD Diagram](ERD_Practicum01_RutujaJadhav.png)
+![ERD Diagram](ERD.png)
 \newpage
 
 ## Functional Dependencies and Normalization
