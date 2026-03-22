@@ -40,12 +40,13 @@ RestaurantVisit.JadhavR/
 │   ├── restaurant-visits-209874.csv          # Raw visits dataset
 │   └── restaurants-db-02102026.sqlitedb      # Reference SQLite database
 │
-├── designDBSchema.PractI.JadhavR.Rmd         # ERD, normalization, and functional dependencies
-├── createDB.PractI.JadhavR.R                 # Schema creation script
-├── deleteDB.PractI.JadhavR.R                 # Schema teardown script
-├── loadDB.PractI.JadhavR.R                   # Batch data loading from CSV and SQLite
-├── StoredProcedures.JadhavR.R                # Stored procedure definitions and tests
-└── RevenueReport.PractI.JadhavR.Rmd          # R Markdown analytics report
+├── designDBSchema.Rmd         # ERD, normalization, and functional dependencies
+├── createDB.R                 # Schema creation script
+├── deleteDB.R                 # Schema teardown script
+├── loadDB.R                   # Batch data loading from CSV and SQLite
+├── testDBLoading.R            # Data loading verification and tests
+├── StoredProcedures.R         # Stored procedure definitions and tests
+└── RevenueReport.Rmd          # R Markdown analytics report
 ```
 
 ---
@@ -56,8 +57,9 @@ RestaurantVisit.JadhavR/
 2. Install required R packages: `DBI`, `RMySQL`, `RSQLite`, `dplyr`, `knitr`, `kableExtra`.
 3. Place the CSV and SQLite files in the `data/` folder.
 4. Update the Aiven MySQL credentials in the connection block.
-5. Run `createDB.PractI.JadhavR.R` to create the schema.
-6. Run `loadDB.PractI.JadhavR.R` to batch-load all data (note: this may take 15–25 minutes on the full dataset).
-7. Run `StoredProcedures.JadhavR.R` to create and test stored procedures.
-8. Knit `RevenueReport.PractI.JadhavR.Rmd` to generate the analytics report.
-9. To reset the database, run `deleteDB.PractI.JadhavR.R` followed by `createDB.PractI.JadhavR.R`.
+5. Run `createDB.R` to create the schema.
+6. Run `loadDB.R` to batch-load all data (note: this may take 15–25 minutes on the full dataset).
+7. Run `testDBLoading.R` to verify the data loaded correctly.
+8. Run `StoredProcedures.R` to create and test stored procedures.
+9. Knit `RevenueReport.Rmd` to generate the analytics report.
+10. To reset the database, run `deleteDB.R` followed by `createDB.R`.
