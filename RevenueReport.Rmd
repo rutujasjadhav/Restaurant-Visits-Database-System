@@ -1,0 +1,150 @@
+---
+title: "Analyze Sales"
+author: "Rutuja Jadhav"
+output:
+  pdf_document: default
+---
+
+
+
+```{r AivenConnect, echo=FALSE,  message=FALSE}
+
+# load required library
+library(RMySQL)
+library(kableExtra)
+
+# CONNECT TO AIVEN
+# define settings
+db_host_aiven <- "YOUR_HOST"
+db_port_aiven <- 00000
+db_name_aiven <- "YOUR_DB_NAME"
+db_user_aiven <- "YOUR_USERNAME"
+db_pwd_aiven <- "YOUR_PASSWORD"
+
+# embedded SSL certificate
+db_cert <- 
+  '
+-----BEGIN CERTIFICATE-----
+xxxx
+-----END CERTIFICATE-----
+'
+
+# connect securely to remote MySQL server and database
+mydb.aiven <-  dbConnect(RMySQL::MySQL(), 
+                         user = db_user_aiven, 
+                         password = db_pwd_aiven,
+                         dbname = db_name_aiven, 
+                         host = db_host_aiven, 
+                         port = db_port_aiven,
+                         sslmode = "require",
+                         sslcert = db_cert)
+```
+
+## Analysis by Restaurant
+
+```{r analysisByRestaurant, echo=FALSE, warning=FALSE, message=FALSE}
+restaurant_analysis <- dbGetQuery(mydb.aiven, "
+  SELECT r.restaurantName AS Restaurant,
+         COUNT(v.visitID) AS TotalVisits,
+         COUNT(DISTINCT v.customerID) AS UniqueCustomers,
+         SUM(CASE WHEN c.loyaltyMember = 1 THEN 1 ELSE 0 END) AS LoyaltyCustomers,
+         ROUND(SUM(b.foodBill + b.alcoholBill), 2) AS TotalRevenue
+  FROM restaurants r
+  LEFT JOIN visit v ON r.restaurantID = v.restaurantID
+  LEFT JOIN bill b ON v.visitID = b.visitID
+  LEFT JOIN customers c ON v.customerID = c.customerID
+  GROUP BY r.restaurantID, r.restaurantName
+  ORDER BY TotalRevenue DESC
+")
+
+kable(restaurant_analysis,
+      col.names = c("Restaurant", "Total Visits", "Unique Customers", 
+                    "Loyalty Customers", "Total Revenue ($)"),
+      caption = "Analysis by Restaurant") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down"))
+```
+
+\newpage
+
+## Sales and Visit Analytics
+
+```{r salesVisitAnalytics, echo=FALSE, warning=FALSE, message=FALSE}
+# dynamically calculate prior 3 years
+current_year <- as.integer(format(Sys.Date(), "%Y"))
+start_year <- current_year - 3
+
+sales_analytics <- dbGetQuery(mydb.aiven, sprintf("
+  SELECT r.restaurantName AS Restaurant,
+         ROUND(SUM(b.foodBill * (1 - b.foodDiscountPercentage) + b.alcoholBill), 2) AS TotalRevenue,
+         ROUND(SUM(b.foodBill + b.alcoholBill) / COUNT(v.visitID), 2) AS AvgPerParty,
+         ROUND(AVG(v.partySize), 2) AS AvgPartySize
+  FROM restaurants r
+  LEFT JOIN visit v ON r.restaurantID = v.restaurantID
+  LEFT JOIN bill b ON v.visitID = b.visitID
+  WHERE YEAR(v.visitDate) > %d
+  GROUP BY r.restaurantID, r.restaurantName
+  ORDER BY TotalRevenue DESC
+", start_year))
+
+kable(sales_analytics,
+      col.names = c("Restaurant", "Total Revenue ($)", "Avg Per Party ($)", "Avg Party Size"),
+      caption = "Sales and Visit Analytics (Prior 3 Years)") %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down"))
+```
+
+\newpage
+
+## Trend by Month for Florida
+
+```{r trendByMonth, echo=FALSE, warning=FALSE, message=FALSE}
+# dynamically calculate most recent two years
+current_year <- as.integer(format(Sys.Date(), "%Y"))
+year1 <- current_year - 1
+year2 <- current_year - 2
+
+# query monthly revenue for Florida restaurants for most recent two years
+florida_trend <- dbGetQuery(mydb.aiven, sprintf("
+  SELECT MONTH(v.visitDate) AS Month,
+         YEAR(v.visitDate) AS Year,
+         ROUND(SUM(b.foodBill * (1 - b.foodDiscountPercentage) + b.alcoholBill), 2) AS Revenue
+  FROM visit v
+  JOIN bill b ON v.visitID = b.visitID
+  JOIN restaurants r ON v.restaurantID = r.restaurantID
+  JOIN city c ON r.cityID = c.cityID
+  WHERE c.state = 'FL'
+  AND YEAR(v.visitDate) IN (%d, %d)
+  GROUP BY YEAR(v.visitDate), MONTH(v.visitDate)
+  ORDER BY Month, Year
+", year1, year2))
+
+# calculate average revenue per month across the two years
+avg_revenue <- tapply(florida_trend$Revenue, florida_trend$Month, mean)
+months <- as.integer(names(avg_revenue))
+month_names <- month.abb[months]
+
+# plot line chart
+plot(months, avg_revenue,
+     type = "b",
+     pch = 16,
+     col = "steelblue",
+     xlab = "Month",
+     ylab = "Average Revenue ($)",
+     main = paste("Average Monthly Revenue in Florida\n(", year2, "-", year1, ")"),
+     xaxt = "n",
+     ylim = c(0, max(avg_revenue) * 1.2))
+
+# add month labels on x axis
+axis(1, at = months, labels = month_names)
+
+# add data labels
+text(months, avg_revenue, 
+     labels = format(round(avg_revenue), big.mark = ","),
+     pos = 3, cex = 0.7)
+```
+
+
+```{r disconnectAiven, echo=FALSE, message=FALSE, include=FALSE}
+# disconnect
+dbDisconnect(mydb.aiven)
+```
+

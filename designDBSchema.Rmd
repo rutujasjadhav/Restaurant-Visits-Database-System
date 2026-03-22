@@ -1,0 +1,198 @@
+---
+title: "Design Database"
+author: "Rutuja Jadhav"
+output:
+  pdf_document: default
+---
+
+## Original Flat Relation
+
+The original flat relation is derived by combining all columns from the 
+CSV file (visit table) and the SQLite database tables (restaurants and servers):
+
+**R**(RestaurantID, RestaurantName, City, State, hasTableService, EmpID, 
+ServerName, StartDateHired, EndDateHired, HourlyRate, BirthDate, SSN, 
+VisitDate, VisitTime, MealType, PartySize, WaitTime, CustomerName, 
+CustomerPhone, CustomerEmail, LoyaltyMember, FoodBill, TipAmount, 
+FoodDiscountPercentage, PaymentMethod, OrderedAlcohol, AlcoholBill)
+
+### Restaurant Table
+
+Primary Key for this could be `rID`
+
+- $rID \rightarrow RestaurantName$
+- $rID \rightarrow city$
+- $rID \rightarrow hasTableService$
+- $city \rightarrow state$ 
+
+This relation violates 3NF due to the following transitive dependencies:
+- $city \rightarrow state$ (city determines state, but city is not a key attribute)
+
+### Servers Table
+
+Primary Key for this could be `EmpID`
+
+- $EmpID \rightarrow ServerName$
+- $EmpID \rightarrow StartDateHired$
+- $EmpID \rightarrow EndDateHired$
+- $EmpID \rightarrow HourlyRate$ 
+- $EmpID \rightarrow BirthDate$ 
+- $EmpID \rightarrow ssn$ 
+- $EmpID \rightarrow RestaurantID$ 
+
+\newpage
+
+### CSV File Table (Visit Table)
+
+Primary Key for this table should be a added attribute called `visitID`
+
+- $ServerEmpID \rightarrow ServerName$
+- $ServerEmpID \rightarrow RestaurantID$
+- $CustomerEmail \rightarrow LoyaltyMember$
+- $CustomerPhone \rightarrow LoyaltyMember$
+
+All these dependencies violate 3NF because non-key attributes determine other non-key attributes, causing transitive dependencies. These are resolved by decomposing into 8 normalized tables.
+
+- `MealType` repeating values → decomposed into `mealType table`
+- `PaymentMethod` repeating values → decomposed into `paymentMethod table`
+
+I have created 8 tables to combine the 2 tables (servers and restaurants) from sqlite database and the 1 table from the cvs file. All the tables are in 3NF form.
+
+
+## ER Diagram
+
+![ERD Diagram](ERD_Practicum01_RutujaJadhav.png)
+\newpage
+
+## Functional Dependencies and Normalization
+
+### 1. Servers Table
+
+**Functional Dependencies:**
+
+  - $employeeID \rightarrow firstName$
+  - $employeeID \rightarrow lastName$
+  - $employeeID \rightarrow startDateHired$
+  - $employeeID \rightarrow endDateHired$
+  - $employeeID \rightarrow hourlyRate$
+  - $employeeID \rightarrow birthDate$
+  - $employeeID \rightarrow ssn$
+  - $employeeID \rightarrow restaurantiD$
+
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `employeeID`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. All attributes `firstName`, `lastName`,`startDateHired`, `endDateHired`, `hourlyRate`, `birthDate`, `ssn`, `restaurantID` depend directly and solely on `employeeID`. Therefore no transitive dependencies exist.
+
+### 2. Restaurants Table
+
+**Functional Dependencies:**
+
+  - $restaurantID \rightarrow restaurantName$ 
+  - $restaurantID \rightarrow citylD$
+  - $restaurantID \rightarrow hasTableService$
+
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `restaurantID`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. All attributes `restaurantName`, `citylD`,`hasTableService` depend directly and solely on `restaurantID`. Therefore no transitive dependencies exist.
+  
+### 3. City Table
+
+**Functional Dependencies:**
+
+  - $cityID \rightarrow cityName$
+  - $cityID \rightarrow state$
+  
+**Note:** This table is a lookup/associate table to decompose the transitive relationship that would have occurred in the **Restaurants Table** if we kept `city` and `state` both in it. As $city \rightarrow state$ where city is not a key attribute.
+
+\newpage
+
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `cityID`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. The only other attribute `cityName` depends directly and solely on `cityID`. Therefore no transitive dependencies exist.
+  
+### 4. Visit Table
+
+**Functional Dependencies:**
+
+  - $visitID \rightarrow visitDate$ 
+  - $visitID \rightarrow visitTime$ 
+  - $visitID \rightarrow partySize$ 
+  - $visitID \rightarrow waitTime$
+  - $visitID \rightarrow mealTypelD$
+  - $visitID \rightarrow restaurantiD$
+  - $visitID \rightarrow serverlD$ 
+  - $visitID \rightarrow customerID$
+
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `visitID`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. All attributes `visitDate`, `visitTime`, `partySize`, `waitTime`, `mealTypelD`, `restaurantiD`, `serverlD`, `customerID` depend directly and solely on `visitID`. Therefore no transitive dependencies exist.
+
+### 5. Customers Table
+
+**Functional Dependencies:**
+
+  - $customeriD \rightarrow firstName$ 
+  - $customeriD \rightarrow lastName$ 
+  - $customeriD \rightarrow phoneNumber$ 
+  - $customeriD \rightarrow emaillD$
+  - $customeriD \rightarrow loyaltyMember$
+  
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `customeriD`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. All attributes `firstName`, `lastName`, `phoneNumber`, `emaillD`, `loyaltyMember` depend directly and solely on `customeriD`. Therefore no transitive dependencies exist.
+
+\newpage
+
+### 6. Bill Table
+
+**Functional Dependencies:**
+
+  - $billiD \rightarrow visitiD$ 
+  - $billiD \rightarrow foodBill$ 
+  - $billiD \rightarrow foodDiscountPercentage$ 
+  - $billiD \rightarrow tipAmount$ 
+  - $billiD \rightarrow orderedAlcohol$
+  - $billiD \rightarrow alcoholBill$ 
+  - $billiD \rightarrow paymentMethodID$
+
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `billiD`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. All attributes `visitiD`, `foodBill`, `foodDiscountPercentage`, `tipAmount`, `orderedAlcohol`, `alcoholBill`, `paymentMethodID` depend directly and solely on `billiD`. Therefore no transitive dependencies exist.
+
+### 7. Payment Method Table
+
+**Functional Dependencies:**
+
+  - $paymentMethodiD \rightarrow paymentMethodName$
+
+**Note:** This table is a lookup/associate table to decompose the multiple-choice value that could have been in the payment option such as `credit card`, `mobile payment`, `cash` etc. This ensures that if a new payment method is added then it only needs to be updated here instead of changing the `check constraint` in the **bill table** for the `paymentMethod` attribute. 
+
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `paymentMethodiD`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. The only other attribute `paymentMethodName` depends directly and solely on `paymentMethodiD`. Therefore no transitive dependencies exist.
+
+### 8. Meal Type Table
+
+**Functional Dependencies:**
+
+  - $mealTypelD \rightarrow mealType$
+  
+**Explanation of table being in 3NF:**
+
+  - 1NF: All attributes are atomic and single-valued. There are no repeating groups.
+  - 2NF: The primary key is a single attribute `mealTypelD`, therefore partial dependencies are not possible and the table is in 2NF.
+  - 3NF: No non-key attribute determines another non-key attribute. The only other attribute `mealType` depends directly and solely on `mealTypelD`. Therefore no transitive dependencies exist.
